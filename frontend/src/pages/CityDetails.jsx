@@ -11,7 +11,7 @@ const CityDetails = () => {
   useEffect(() => {
     const fetchCity = async () => {
       try {
-        const res = await API.get(`http://localhost:5000/api/data/cities/${id}`);
+        const res = await API.get(`/api/data/cities/${id}`);
         setData(res.data);
         setLoading(false);
       } catch (err) {

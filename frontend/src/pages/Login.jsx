@@ -11,7 +11,7 @@ const Login = ({ onLogin }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await API.post('http://localhost:5000/api/auth/login', { email, password });
+      const res = await API.post('/api/auth/login', { email, password });
       onLogin(res.data.user, res.data.token);
       navigate('/profile');
     } catch (err) {

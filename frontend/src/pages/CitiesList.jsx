@@ -9,7 +9,7 @@ const CitiesList = () => {
   useEffect(() => {
     const fetchCities = async () => {
       try {
-        const res = await API.get('http://localhost:5000/api/data/cities');
+        const res = await API.get('/api/data/cities');
         setCities(res.data);
         setLoading(false);
       } catch (err) {

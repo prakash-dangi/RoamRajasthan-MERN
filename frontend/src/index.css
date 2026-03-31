@@ -1,23 +1,67 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800&display=swap');
+@import "tailwindcss";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* ─────────────────────────────────────────────
+   Tailwind v4 Theme — custom colors & fonts
+───────────────────────────────────────────── */
+@theme {
+  /* Brand palette (earthy greens / desert) */
+  --color-brand-50:  #fdf8f6;
+  --color-brand-100: #f2e8e5;
+  --color-brand-200: #eaddd7;
+  --color-brand-300: #e0cec7;
+  --color-brand-400: #d2bab0;
+  --color-brand-500: #a3b18a;
+  --color-brand-600: #588157;
+  --color-brand-700: #3a5a40;
+  --color-brand-800: #344e41;
+  --color-brand-900: #2c3a32;
 
+  /* Gold / sunset palette */
+  --color-gold-100: #fef3e2;
+  --color-gold-200: #fde4b5;
+  --color-gold-300: #fbcd84;
+  --color-gold-400: #e9c46a;
+  --color-gold-500: #f4a261;
+  --color-gold-600: #e76f51;
+
+  /* Typography */
+  --font-sans:    'Inter', sans-serif;
+  --font-display: 'Outfit', sans-serif;
+}
+
+/* ─────────────────────────────────────────────
+   Base
+───────────────────────────────────────────── */
 @layer base {
   body {
     @apply antialiased bg-gray-50 text-gray-900;
+    font-family: var(--font-sans);
   }
 }
 
+/* ─────────────────────────────────────────────
+   Reusable component classes
+───────────────────────────────────────────── */
 @layer components {
-  /* Reusable sleek buttons */
   .btn-primary {
-    @apply inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-gold-600 hover:bg-gold-500 hover:scale-[1.02] transform transition-all duration-300 shadow-xl shadow-gold-500/30;
+    @apply inline-flex items-center justify-center
+           px-6 py-3 rounded-xl
+           text-base font-semibold text-white
+           bg-[--color-gold-600]
+           hover:bg-[--color-gold-500]
+           hover:scale-[1.02]
+           transform transition-all duration-300
+           shadow-lg;
   }
 
-  /* Sleek input fields */
   .input-field {
-    @apply w-full pl-10 px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-transparent transition-all;
+    @apply w-full pl-10 pr-4 py-3
+           rounded-xl border border-gray-200
+           bg-gray-50/50
+           focus:bg-white focus:outline-none
+           focus:ring-2 focus:ring-[--color-gold-500]
+           focus:border-transparent
+           transition-all;
   }
 }
