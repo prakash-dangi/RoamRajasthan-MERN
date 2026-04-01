@@ -14,9 +14,9 @@ router.post('/register', async (req, res) => {
         }
         // Hash password
         const salt = await bcrypt.genSalt(10);
-        const password_hash = await bcrypt.hash(password, salt);
-        // Create user
-        user = new User({ username, email, password_hash });
+        const hashedPassword = await bcrypt.hash(password, salt);
+        // Create user — field is now 'password' (not 'password_hash')
+        user = new User({ username, email, password: hashedPassword });
         await user.save();
         
         const payload = { user: { id: user.id } };
@@ -39,7 +39,8 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ msg: 'Invalid Credentials' });
         }
         // Match password
-        const isMatch = await bcrypt.compare(password, user.password_hash);
+        // Field is now 'password' (not 'password_hash')
+        const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(400).json({ msg: 'Invalid Credentials' });
         }

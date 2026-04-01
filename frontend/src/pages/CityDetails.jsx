@@ -11,8 +11,20 @@ const CityDetails = () => {
   useEffect(() => {
     const fetchCity = async () => {
       try {
-        const res = await API.get(`/api/data/cities/${id}`);
-        setData(res.data);
+        // API was refactored into separate endpoints — fetch all in parallel
+        const [cityRes, placesRes, foodRes, shoppingRes] = await Promise.all([
+          API.get(`/api/data/cities/${id}`),
+          API.get(`/api/data/places/city/${id}`),
+          API.get(`/api/data/food/city/${id}`),
+          API.get(`/api/data/shopping/city/${id}`),
+        ]);
+
+        setData({
+          city: cityRes.data,
+          places: placesRes.data,
+          food: foodRes.data,
+          shopping: shoppingRes.data,
+        });
         setLoading(false);
       } catch (err) {
         console.error('Error fetching city details', err);
@@ -30,7 +42,7 @@ const CityDetails = () => {
     );
   }
 
-  const { city, places, food } = data;
+  const { city, places, food, shopping } = data;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -120,7 +132,7 @@ const CityDetails = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {places.map((place) => (
-                <div key={place.place_id} className="group rounded-2xl overflow-hidden bg-white shadow-md hover:shadow-2xl transition-all duration-300 border border-gray-100 cursor-pointer">
+                <div key={place._id} className="group rounded-2xl overflow-hidden bg-white shadow-md hover:shadow-2xl transition-all duration-300 border border-gray-100 cursor-pointer">
                   <div className="h-48 overflow-hidden relative">
                     <img 
                       src={`/${place.image_url}`} 
@@ -153,11 +165,36 @@ const CityDetails = () => {
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {food.map((item) => (
-                <div key={item.food_id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:border-gold-300 transition-colors flex items-center gap-4 group">
+                <div key={item._id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:border-gold-300 transition-colors flex items-center gap-4 group">
                   <img src={`/${item.image_url}`} alt={item.name} className="w-16 h-16 rounded-xl object-cover shadow-sm group-hover:scale-110 transition-transform" />
                   <div>
                     <h3 className="font-bold text-gray-900">{item.name}</h3>
                     <p className="text-xs font-medium text-gold-600 mt-1">{item.specialty}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Shopping Section */}
+        {shopping && shopping.length > 0 && (
+          <section>
+            <div className="flex items-center gap-4 mb-10">
+              <div className="w-10 h-10 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center">
+                <i className="fas fa-shopping-bag"></i>
+              </div>
+              <h2 className="text-3xl font-display font-bold text-gray-900">Shopping Spots</h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {shopping.map((shop) => (
+                <div key={shop._id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:border-gold-300 transition-colors flex gap-5 group">
+                  <img src={`/${shop.image_url}`} alt={shop.name} className="w-20 h-20 rounded-xl object-cover shadow-sm shrink-0 group-hover:scale-105 transition-transform" />
+                  <div>
+                    <h3 className="font-bold text-gray-900 text-lg mb-1">{shop.name}</h3>
+                    <p className="text-xs font-semibold text-brand-600 mb-2">{shop.famous_for}</p>
+                    <p className="text-xs text-gray-400"><i className="fas fa-clock mr-1"></i>{shop.best_time}</p>
                   </div>
                 </div>
               ))}
