@@ -10,7 +10,7 @@ const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.json({ extended: false }));
+app.use(express.json());
 
 // Define Routes
 app.use('/api/auth', require('./routes/authRoutes'));

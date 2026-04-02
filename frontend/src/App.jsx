@@ -8,6 +8,7 @@ import CityDetails from './pages/CityDetails';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
+import PlaceDetails from './pages/PlaceDetails';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -42,6 +43,7 @@ function App() {
           <Route path="/login" element={<Login onLogin={handleLogin} />} />
           <Route path="/register" element={<Register onLogin={handleLogin} />} />
           <Route path="/profile" element={user ? <Profile user={user} /> : <Navigate to="/login" />} />
+          <Route path="/place/:id" element={<PlaceDetails currentUser={user} />} />
         </Routes>
       </main>
       <Footer />

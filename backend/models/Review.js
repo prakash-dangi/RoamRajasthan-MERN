@@ -1,19 +1,19 @@
+// backend/models/Review.js
 const mongoose = require('mongoose');
 
-const reviewReplySchema = new mongoose.Schema({
-    user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    reply_text: { type: String, required: true },
-    created_at: { type: Date, default: Date.now }
+const ReplySchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  reply_text: { type: String, required: true },
+  created_at: { type: Date, default: Date.now }
 });
 
-const reviewSchema = new mongoose.Schema({
-    place_id: { type: String, required: true },
-    user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    rating: { type: Number, required: true },
-    review_text: { type: String },
-    photos: [{ type: String }],
-    replies: [reviewReplySchema],
-    created_at: { type: Date, default: Date.now }
+const ReviewSchema = new mongoose.Schema({
+  place: { type: mongoose.Schema.Types.ObjectId, ref: 'Place', required: true },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  rating: { type: Number, required: true, min: 1, max: 5 },
+  review_text: { type: String, required: true },
+  replies: [ReplySchema],
+  created_at: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('Review', reviewSchema);
+module.exports = mongoose.model('Review', ReviewSchema);

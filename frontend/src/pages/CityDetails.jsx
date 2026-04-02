@@ -132,22 +132,24 @@ const CityDetails = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {places.map((place) => (
-                <div key={place._id} className="group rounded-2xl overflow-hidden bg-white shadow-md hover:shadow-2xl transition-all duration-300 border border-gray-100 cursor-pointer">
-                  <div className="h-48 overflow-hidden relative">
-                    <img 
-                      src={`/${place.image_url}`} 
-                      alt={place.name} 
-                      className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-brand-700 shadow-sm">
-                      {place.type}
+                <Link key={place._id} to={`/place/${place._id}`}>
+                  <div className="group rounded-2xl overflow-hidden bg-white shadow-md hover:shadow-2xl transition-all duration-300 border border-gray-100 cursor-pointer">
+                    <div className="h-48 overflow-hidden relative">
+                      <img 
+                        src={`/${place.image_url}`} 
+                        alt={place.name} 
+                        className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-brand-700 shadow-sm">
+                        {place.type}
+                      </div>
+                    </div>
+                    <div className="p-6">
+                      <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-brand-600 transition-colors">{place.name}</h3>
+                      <p className="text-sm text-gray-500 line-clamp-2">{place.description}</p>
                     </div>
                   </div>
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-brand-600 transition-colors">{place.name}</h3>
-                    <p className="text-sm text-gray-500 line-clamp-2">{place.description}</p>
-                  </div>
-                </div>
+                </Link>
               ))}
             </div>
           </section>
