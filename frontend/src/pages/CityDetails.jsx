@@ -118,6 +118,38 @@ const CityDetails = () => {
               <p className="text-sm text-gray-500 leading-relaxed">{city.best_time}</p>
             </div>
           </div>
+
+          <div className="planning-section" style={{margin: '20px 0', padding: '20px', background: '#f9f9f9'}}>
+                <h3>Plan Your Stay</h3>
+                <p>Want a day-by-day plan for {city.city_name}?</p>
+                {/* Route is /itinerary/:cityId (not /itineraryDetails) and we use city._id (MongoDB ObjectId), not the custom city_id string */}
+                <Link to={`/itinerary/${data.city._id}`} className="itinerary-link-btn">
+                    View {city.city_name} Itinerary →
+                </Link>
+            </div>
+
+            <style>{`
+                .planning-section {
+                    text-align: center;
+                    margin: 20px 0;
+                    padding: 20px;
+                    background: #f9f9f9;
+                    border-radius: 10px;
+                }
+                .itinerary-link-btn {
+                    display: inline-block;
+                    margin-top: 10px;
+                    padding: 10px 20px;
+                    background: #007bff;
+                    color: white;
+                    text-decoration: none;
+                    border-radius: 5px;
+                    font-weight: bold;
+                }
+                .itinerary-link-btn:hover {
+                    background: #0056b3;
+                }
+            `}</style>
         </section>
 
         {/* Places Section */}

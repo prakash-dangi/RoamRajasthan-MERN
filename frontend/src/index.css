@@ -47,21 +47,30 @@
   .btn-primary {
     @apply inline-flex items-center justify-center
            px-6 py-3 rounded-xl
-           text-base font-semibold text-white
-           bg-[--color-gold-600]
-           hover:bg-[--color-gold-500]
-           hover:scale-[1.02]
+           font-semibold text-white
            transform transition-all duration-300
            shadow-lg;
+    background-color: var(--color-gold-600);
+    font-size: 1rem;
+  }
+  .btn-primary:hover {
+    background-color: var(--color-gold-500);
+    transform: scale(1.02);
+  }
+  .btn-primary:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
   }
 
   .input-field {
     @apply w-full pl-10 pr-4 py-3
            rounded-xl border border-gray-200
-           bg-gray-50/50
+           bg-gray-50
            focus:bg-white focus:outline-none
-           focus:ring-2 focus:ring-[--color-gold-500]
            focus:border-transparent
            transition-all;
+  }
+  .input-field:focus {
+    box-shadow: 0 0 0 2px var(--color-gold-500);
   }
 }

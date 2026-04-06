@@ -7,17 +7,26 @@ const City = require('./models/City');
 const Place = require('./models/Place');
 const Food = require('./models/Food');
 const Shopping = require('./models/Shopping');
+const Itinerary = require('./models/Itinerary');
 
 const seedDatabase = async () => {
     try {
         await mongoose.connect(process.env.MONGO_URI);
         console.log('✅ Connected to MongoDB for seeding...');
 
-        // 1. Clear all existing data to prevent duplicates
-        await City.deleteMany();
-        await Place.deleteMany();
-        await Food.deleteMany();
-        await Shopping.deleteMany();
+        // 1. Drop all collections to remove both documents AND any stale indexes
+        //    (deleteMany only removes documents, not indexes — which causes E11000 errors
+        //     if the schema changed and old unique indexes still exist in MongoDB)
+        const dropIfExists = async (model) => {
+            try { await model.collection.drop(); } catch (e) { /* collection didn't exist yet, that's fine */ }
+        };
+        await Promise.all([
+            dropIfExists(City),
+            dropIfExists(Place),
+            dropIfExists(Food),
+            dropIfExists(Shopping),
+            dropIfExists(Itinerary),
+        ]);
         console.log('🧹 Cleared all old data.');
 
         // 2. Insert Cities
@@ -32,7 +41,7 @@ const seedDatabase = async () => {
                 train: 'Jaipur Junction',
                 road: 'Well connected by NH48',
                 map_link: 'https://maps.app.goo.gl/jaipur',
-                image_url: 'images/jaipur/hawaMahal.jpg' 
+                image_url: 'images/jaipur/hawaMahal.jpg'
             },
             {
                 city_id: 'C02',
@@ -51,15 +60,21 @@ const seedDatabase = async () => {
         const createdCities = await City.insertMany(citiesData);
         console.log(`🏙️ Inserted ${createdCities.length} cities.`);
 
-        // Get the ObjectIds for references
-        const jaipurId = createdCities[0]._id;
-        const udaipurId = createdCities[1]._id;
+        // Helper function to find a city's MongoDB _id by its city_name
+        const getCityId = (cityName) => {
+            const city = createdCities.find(c => c.city_name.toLowerCase() === cityName.toLowerCase());
+            if (!city) throw new Error(`City not found in created list: ${cityName}`);
+            return city._id;
+        };
 
-        // 3. Insert Places
+        const jaipurId = getCityId("Jaipur");
+        const udaipurId = getCityId("Udaipur");
+
+        // 4. Insert Places
         const placesData = [
             {
                 place_id: 'P01',
-                city_id: jaipurId, 
+                city_id: jaipurId,
                 name: 'Hawa Mahal',
                 type: 'Palace',
                 description: 'The Palace of Winds with a unique honeycomb facade built for royal ladies.',
@@ -70,7 +85,7 @@ const seedDatabase = async () => {
             },
             {
                 place_id: 'P02',
-                city_id: jaipurId, 
+                city_id: jaipurId,
                 name: 'Amer Fort',
                 type: 'Fort',
                 description: 'A majestic fort situated on a hill, known for its artistic Hindu style elements.',
@@ -81,7 +96,7 @@ const seedDatabase = async () => {
             },
             {
                 place_id: 'P03',
-                city_id: udaipurId, 
+                city_id: udaipurId,
                 name: 'City Palace',
                 type: 'Palace',
                 description: 'A magnificent palace complex situated on the banks of Lake Pichola.',
@@ -145,12 +160,32 @@ const seedDatabase = async () => {
         const createdShopping = await Shopping.insertMany(shoppingData);
         console.log(`🛍️ Inserted ${createdShopping.length} shopping spots.`);
 
+        await Itinerary.insertMany([
+            {
+                cityId: jaipurId,
+                day: 1,
+                title: "Royal Heritage Tour",
+                activities: [
+                    { time: "09:00 AM", location: "Amer Fort", description: "Explore the majestic fort." }
+                ]
+            },
+            {
+                cityId: udaipurId,
+                day: 1,
+                title: "Lake Views",
+                activities: [
+                    { time: "10:00 AM", location: "City Palace", description: "Visit the palace complex." }
+                ]
+            }
+        ]);
+        console.log("📅 Inserted Itineraries.");
+
         console.log('🎉 Database fully seeded and ready to go!');
         process.exit(0);
 
     } catch (error) {
         console.error('❌ Error seeding the database:', error);
-        process.exit(1); 
+        process.exit(1);
     }
 };
 

@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const connectDB = require('./db');
 require('dotenv').config();
 
@@ -11,6 +12,9 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Serve uploaded files as static — accessible at /uploads/<filename>
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Define Routes
 app.use('/api/auth', require('./routes/authRoutes'));

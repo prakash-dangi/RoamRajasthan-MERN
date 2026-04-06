@@ -9,6 +9,9 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 import PlaceDetails from './pages/PlaceDetails';
+import Itineraries from './pages/Itineraries';
+import ItineraryDetails from './pages/ItineraryDetails';
+import ScrollToTop from './components/ScrollToTop';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -34,6 +37,7 @@ function App() {
 
   return (
     <Router>
+      <ScrollToTop />
       <Header user={user} onLogout={handleLogout} />
       <main>
         <Routes>
@@ -42,8 +46,10 @@ function App() {
           <Route path="/cities/:id" element={<CityDetails />} />
           <Route path="/login" element={<Login onLogin={handleLogin} />} />
           <Route path="/register" element={<Register onLogin={handleLogin} />} />
-          <Route path="/profile" element={user ? <Profile user={user} /> : <Navigate to="/login" />} />
+          <Route path="/profile" element={user ? <Profile user={user} onLogin={handleLogin} onLogout={handleLogout} /> : <Navigate to="/login" />} />
           <Route path="/place/:id" element={<PlaceDetails currentUser={user} />} />
+          <Route path="/itineraries" element={<Itineraries />} />
+          <Route path="/itinerary/:cityId" element={<ItineraryDetails />} />
         </Routes>
       </main>
       <Footer />

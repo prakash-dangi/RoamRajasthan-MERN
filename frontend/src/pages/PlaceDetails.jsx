@@ -1,7 +1,8 @@
 // frontend/src/pages/PlaceDetails.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import API from '../api'; // Use the shared axios instance
+import API from '../api';
+import { getImageUrl } from '../utils/imageUrl';
 
 const PlaceDetails = ({ currentUser }) => {
   const { id } = useParams();
@@ -9,17 +10,25 @@ const PlaceDetails = ({ currentUser }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [newReview, setNewReview] = useState({ rating: 5, text: '' });
-  const [activeReplyBox, setActiveReplyBox] = useState(null); // ID of review being replied to
+  const [reviewPhotos, setReviewPhotos] = useState([]); // File objects chosen by user
+  const [reviewPhotoPreviews, setReviewPhotoPreviews] = useState([]); // Object URLs for preview
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [activeReplyBox, setActiveReplyBox] = useState(null);
+  const reviewFileRef = useRef(null);
 
   useEffect(() => {
     fetchData();
   }, [id]);
 
+  // Cleanup preview URLs when component unmounts or photos change
+  useEffect(() => {
+    return () => reviewPhotoPreviews.forEach(url => URL.revokeObjectURL(url));
+  }, [reviewPhotoPreviews]);
+
   const fetchData = async () => {
     setLoading(true);
     setError(null);
     try {
-      // Correct path: routes are mounted at /api/data in server.js
       const res = await API.get(`/api/data/place/${id}`);
       setData(res.data);
     } catch (err) {
@@ -30,20 +39,50 @@ const PlaceDetails = ({ currentUser }) => {
     }
   };
 
+  const handlePhotoSelect = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length + reviewPhotos.length > 4) {
+      alert('You can attach a maximum of 4 photos per review.');
+      return;
+    }
+    setReviewPhotos(prev => [...prev, ...files]);
+    setReviewPhotoPreviews(prev => [
+      ...prev,
+      ...files.map(f => URL.createObjectURL(f))
+    ]);
+    e.target.value = '';
+  };
+
+  const removePhoto = (index) => {
+    URL.revokeObjectURL(reviewPhotoPreviews[index]);
+    setReviewPhotos(prev => prev.filter((_, i) => i !== index));
+    setReviewPhotoPreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
     if (!currentUser) return;
+    setSubmitLoading(true);
     try {
-      await API.post('/api/data/reviews', {
-        placeId: id,
-        userId: currentUser.id,
-        rating: newReview.rating,
-        review_text: newReview.text
+      // Use FormData so we can send both fields and files in one request
+      const formData = new FormData();
+      formData.append('placeId', id);
+      formData.append('userId', currentUser.id);
+      formData.append('rating', newReview.rating);
+      formData.append('review_text', newReview.text);
+      reviewPhotos.forEach(file => formData.append('photos', file));
+
+      await API.post('/api/data/reviews', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
       setNewReview({ rating: 5, text: '' });
+      setReviewPhotos([]);
+      setReviewPhotoPreviews([]);
       fetchData();
     } catch (err) {
       console.error('Error submitting review:', err);
+    } finally {
+      setSubmitLoading(false);
     }
   };
 
@@ -158,18 +197,26 @@ const PlaceDetails = ({ currentUser }) => {
         {currentUser && (
           <section className="bg-white rounded-3xl p-8 md:p-10 shadow-xl shadow-gray-200/40">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Leave a Review</h2>
-            <form onSubmit={handleReviewSubmit} className="space-y-4">
+            <form onSubmit={handleReviewSubmit} className="space-y-5">
+              {/* Rating */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Rating (1–5)</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="5"
-                  value={newReview.rating}
-                  onChange={(e) => setNewReview({ ...newReview, rating: Number(e.target.value) })}
-                  className="w-24 border border-gray-200 rounded-xl px-4 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-400"
-                />
+                <div className="flex gap-2">
+                  {[1,2,3,4,5].map(star => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setNewReview({ ...newReview, rating: star })}
+                      className={`text-2xl transition-transform hover:scale-110 ${star <= newReview.rating ? 'text-yellow-400' : 'text-gray-300'}`}
+                    >
+                      ★
+                    </button>
+                  ))}
+                  <span className="ml-2 text-sm text-gray-500 self-center font-semibold">{newReview.rating}/5</span>
+                </div>
               </div>
+
+              {/* Review text */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Your Review</label>
                 <textarea
@@ -181,11 +228,65 @@ const PlaceDetails = ({ currentUser }) => {
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-400 resize-none"
                 />
               </div>
+
+              {/* Photo upload */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Add Photos <span className="text-gray-400 font-normal">(optional, max 4)</span>
+                </label>
+
+                {/* Preview strip */}
+                {reviewPhotoPreviews.length > 0 && (
+                  <div className="flex gap-3 flex-wrap mb-3">
+                    {reviewPhotoPreviews.map((src, i) => (
+                      <div key={i} className="relative group">
+                        <img
+                          src={src}
+                          alt={`Preview ${i + 1}`}
+                          className="w-20 h-20 rounded-xl object-cover border border-gray-200 shadow-sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removePhoto(i)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {reviewPhotos.length < 4 && (
+                  <button
+                    type="button"
+                    onClick={() => reviewFileRef.current?.click()}
+                    className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-sm font-semibold text-gray-500 hover:border-brand-400 hover:text-brand-600 transition-colors"
+                  >
+                    <i className="fas fa-camera"></i>
+                    {reviewPhotos.length === 0 ? 'Add Photos' : `Add More (${4 - reviewPhotos.length} left)`}
+                  </button>
+                )}
+                <input
+                  type="file"
+                  ref={reviewFileRef}
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handlePhotoSelect}
+                />
+              </div>
+
               <button
                 type="submit"
-                className="px-8 py-3 bg-brand-600 text-white rounded-full font-bold hover:bg-brand-700 transition-colors shadow-md"
+                disabled={submitLoading}
+                className="px-8 py-3 bg-brand-600 text-white rounded-full font-bold hover:bg-brand-700 transition-colors shadow-md disabled:opacity-60 flex items-center gap-2"
               >
-                Submit Review
+                {submitLoading ? (
+                  <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></div> Submitting...</>
+                ) : (
+                  'Submit Review'
+                )}
               </button>
             </form>
           </section>
@@ -205,13 +306,43 @@ const PlaceDetails = ({ currentUser }) => {
             <div className="space-y-6">
               {reviews.map((review) => (
                 <div key={review._id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                  <div className="flex items-center justify-between mb-3">
-                    <strong className="text-gray-900 font-bold">
-                      {review.user?.username || 'Anonymous'}
-                    </strong>
-                    <span className="text-sm font-semibold text-yellow-500">⭐ {review.rating}/5</span>
+                  {/* Reviewer info */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <img
+                      src={getImageUrl(review.user?.profile_image_url)}
+                      alt={review.user?.username}
+                      className="w-9 h-9 rounded-full object-cover border-2 border-gray-100"
+                      onError={(e) => { e.target.src = '/images/default_profile.png'; }}
+                    />
+                    <div className="flex-1">
+                      <strong className="text-gray-900 font-bold text-sm">
+                        {review.user?.username || 'Anonymous'}
+                      </strong>
+                      <p className="text-xs text-gray-400">
+                        {new Date(review.created_at).toLocaleDateString('en-IN', { year:'numeric', month:'long', day:'numeric' })}
+                      </p>
+                    </div>
+                    <span className="text-sm font-bold text-yellow-500 flex items-center gap-0.5">
+                      {'★'.repeat(review.rating)}<span className="text-gray-300">{'★'.repeat(5 - review.rating)}</span>
+                    </span>
                   </div>
+
                   <p className="text-gray-600 leading-relaxed">{review.review_text}</p>
+
+                  {/* Review photos */}
+                  {review.images && review.images.length > 0 && (
+                    <div className="flex gap-2 mt-3 flex-wrap">
+                      {review.images.map((img, i) => (
+                        <img
+                          key={i}
+                          src={getImageUrl(img)}
+                          alt={`Review photo ${i + 1}`}
+                          className="w-24 h-24 rounded-xl object-cover border border-gray-200 shadow-sm cursor-pointer hover:scale-105 transition-transform"
+                          onClick={() => window.open(getImageUrl(img), '_blank')}
+                        />
+                      ))}
+                    </div>
+                  )}
 
                   {/* Replies */}
                   {review.replies && review.replies.length > 0 && (

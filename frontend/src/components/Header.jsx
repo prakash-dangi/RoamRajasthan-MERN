@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { getImageUrl } from '../utils/imageUrl';
 
 const Header = ({ user, onLogout }) => {
-  const profileImage = user?.profile_image_url ? `/${user.profile_image_url}` : '/images/default_profile.png';
+  const profileImage = getImageUrl(user?.profile_image_url, '/images/default_profile.png');
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
 
@@ -40,6 +41,7 @@ const Header = ({ user, onLogout }) => {
         <nav className="hidden md:flex items-center space-x-8">
           <Link to="/" className={`font-medium text-sm tracking-wide hover:text-gold-500 transition-colors ${textClass}`}>Home</Link>
           <Link to="/cities" className={`font-medium text-sm tracking-wide hover:text-gold-500 transition-colors ${textClass}`}>Cities</Link>
+          <Link to="/itineraries" className={`font-medium text-sm tracking-wide hover:text-gold-500 transition-colors ${textClass}`}>Itineraries</Link>
           
           {user ? (
             <div className="flex items-center space-x-6 border-l border-gray-200/40 pl-6 border-dashed">

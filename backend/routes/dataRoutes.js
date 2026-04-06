@@ -8,7 +8,8 @@ const Place = require('../models/Place');
 const Review = require('../models/Review');
 const Food = require('../models/Food');
 const Shopping = require('../models/Shopping');
-// Note: If you still have Nature or Itinerary models, you would import them here too!
+const Itinerary = require('../models/Itinerary');
+const { uploadReview } = require('../middleware/upload');
 
 // 1. Get all cities
 router.get('/cities', async (req, res) => {
@@ -108,16 +109,24 @@ router.get('/place/:id', async (req, res) => {
   }
 });
 
-// Post a new review
-router.post('/reviews', async (req, res) => {
-  const { placeId, userId, rating, review_text } = req.body;
-  try {
-    const newReview = new Review({ place: placeId, user: userId, rating, review_text });
-    await newReview.save();
-    res.status(201).json(newReview);
-  } catch (err) {
-    res.status(400).json({ message: "Error posting review" });
-  }
+// Post a new review (supports optional photo uploads via multipart/form-data)
+router.post('/reviews', (req, res) => {
+  uploadReview(req, res, async (uploadErr) => {
+    if (uploadErr) {
+      return res.status(400).json({ message: uploadErr.message });
+    }
+    const { placeId, userId, rating, review_text } = req.body;
+    try {
+      // Build array of image paths for any uploaded files
+      const images = req.files ? req.files.map(f => `uploads/reviews/${f.filename}`) : [];
+      const newReview = new Review({ place: placeId, user: userId, rating, review_text, images });
+      await newReview.save();
+      res.status(201).json(newReview);
+    } catch (err) {
+      console.error('Error posting review:', err);
+      res.status(400).json({ message: 'Error posting review' });
+    }
+  });
 });
 
 // Post a reply to a review
@@ -131,6 +140,26 @@ router.post('/reviews/:id/reply', async (req, res) => {
   } catch (err) {
     res.status(400).json({ message: "Error posting reply" });
   }
+});
+
+// Get all itineraries grouped by city
+router.get('/itineraries', async (req, res) => {
+    try {
+        const itineraries = await Itinerary.find().populate('cityId', 'city_name image_url');
+        res.json(itineraries);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// Get specific itinerary for a city
+router.get('/itinerary/:cityId', async (req, res) => {
+    try {
+        const itinerary = await Itinerary.find({ cityId: req.params.cityId }).sort('day');
+        res.json(itinerary);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
 });
 
 module.exports = router;
